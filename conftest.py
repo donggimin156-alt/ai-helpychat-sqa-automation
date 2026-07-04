@@ -70,7 +70,7 @@ def wait(driver):
 
 @pytest.fixture
 def login(driver, wait):
-    """로그인 완료 상태 반환 — (driver, wait) 튜플"""
+    """[Before] function scope — 로그인이 필요한 테스트마다 매번 브라우저 시작 + 로그인 실행"""
     do_login(driver, wait)
     return driver, wait
 
@@ -90,7 +90,7 @@ def wait_module(driver_module):
 
 @pytest.fixture(scope="module")
 def login_module(driver_module):
-    """모듈 전체 공유 로그인 상태 — (driver, wait) 튜플 / 쿠키 캐싱으로 빠른 로그인"""
+    """[After] module scope — 테스트 파일(모듈)당 1회만 로그인. 쿠키 캐싱으로 재로그인 속도 개선"""
     _wait = WebDriverWait(driver_module, DEFAULT_WAIT)
     do_login_cached(driver_module, _wait)
     return driver_module, _wait

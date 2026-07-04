@@ -12,7 +12,7 @@ pytestmark = [
     allure.epic("Tools"),
     allure.feature("심층 조사"),
     allure.story("심층 조사 해피패스"),
-    pytest.mark.xfail(reason="서비스 업데이트로 Tools 기능 전체 종료됨"),
+    pytest.mark.skip(reason="서비스 업데이트로 Tools 기능 전체 종료됨"),
 ]
 
 

@@ -14,7 +14,7 @@ pytestmark = [
     allure.epic("Tools"),
     allure.feature("행동특성 및 종합의견"),
     allure.story("행동특성 및 종합의견 생성 해피 케이스"),
-    pytest.mark.xfail(reason="서비스 업데이트로 Tools 기능 전체 종료됨"),
+    pytest.mark.skip(reason="서비스 업데이트로 Tools 기능 전체 종료됨"),
 ]
 
 SCHOOL_LEVEL  = "중학교"
