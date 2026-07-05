@@ -13,6 +13,7 @@ pytestmark = [
     allure.epic("Tools"),
     allure.feature("PPT 생성"),
     allure.story("PPT 생성 해피 케이스"),
+    pytest.mark.jira("KAN-8"),
     pytest.mark.skip(reason="서비스 업데이트로 PPT 생성 기능 삭제됨"),
 ]
 

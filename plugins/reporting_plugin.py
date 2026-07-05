@@ -10,7 +10,12 @@ import requests
 import pytest
 from dotenv import load_dotenv
 
-from utils.jira_helper import create_jira_bug_ticket, attach_image_to_jira
+from utils.jira_helper import (
+    create_jira_bug_ticket,
+    attach_image_to_jira,
+    add_comment_to_issue,
+    transition_issue_to_done,
+)
 
 load_dotenv()
 
@@ -67,69 +72,95 @@ def pytest_runtest_makereport(item, call):
             _logger.warning(f"⚠️  {item.name} | {reason}")
 
     # ── Jira 처리 ────────────────────────────
-    if report.when == "call" and report.failed:
-        jira_enabled = item.config.getoption("--jira")
+    if report.when != "call":
+        return
 
-        if not jira_enabled:
-            return
+    jira_enabled = item.config.getoption("--jira")
+    if not jira_enabled:
+        return
 
-        # xfail 제외
-        if hasattr(report, "wasxfail"):
-            return
+    # xfail 제외
+    if hasattr(report, "wasxfail"):
+        return
 
-        # ② driver 탐색
-        driver = (
-            item.funcargs.get("driver")
-            or item.funcargs.get("driver_module")
-            or item.funcargs.get("tools_driver")
-            or item.funcargs.get("tools_driver_module")
-        )
+    # driver 탐색
+    driver = (
+        item.funcargs.get("driver")
+        or item.funcargs.get("driver_module")
+        or item.funcargs.get("tools_driver")
+        or item.funcargs.get("tools_driver_module")
+    )
 
-        current_url = "URL 확인 실패"
-        browser_name = "unknown"
+    current_url = "URL 확인 실패"
+    browser_name = "unknown"
 
-        if driver:
-            try:
-                current_url = driver.current_url
-            except Exception:
-                pass
-            try:
-                browser_name = driver.capabilities.get("browserName")
-            except Exception:
-                pass
+    if driver:
+        try:
+            current_url = driver.current_url
+        except Exception:
+            pass
+        try:
+            browser_name = driver.capabilities.get("browserName")
+        except Exception:
+            pass
 
-        # ③ Jira 이슈 생성
-        test_file = item.location[0]
+    # @pytest.mark.jira('ISSUE-KEY') 마커 확인
+    jira_marker = item.get_closest_marker("jira")
+    linked_issue_key = jira_marker.args[0] if jira_marker and jira_marker.args else None
+
+    test_file = item.location[0]
+
+    if report.failed:
         error_message = str(call.excinfo.value)
-        summary = f"[자동화 테스트 실패] {item.name}"
-        description = f"""
-                    자동화 테스트 실패
 
-                    [Test Case]
-                    {item.name}
+        if linked_issue_key:
+            # ── 연결된 이슈에 실패 코멘트 + 스크린샷 추가 ──
+            comment_body = (
+                f"*[자동화 테스트 실패]* {item.name}\n\n"
+                f"{{panel:title=실패 상세}}\n"
+                f"*파일:* {test_file}\n"
+                f"*브라우저:* {browser_name}\n"
+                f"*URL:* {current_url}\n"
+                f"*오류:* {error_message}\n"
+                f"{{panel}}"
+            )
+            add_comment_to_issue(linked_issue_key, comment_body)
 
-                    [Test File]
-                    {test_file}
+            if driver:
+                try:
+                    screenshot = driver.get_screenshot_as_png()
+                    attach_image_to_jira(linked_issue_key, screenshot)
+                except Exception as e:
+                    logger.warning(f"스크린샷 첨부 실패: {e}")
 
-                    [Browser]
-                    {browser_name}
+        else:
+            # ── 마커 없는 실패 → 새 버그 티켓 생성 (기존 동작) ──
+            summary = f"[자동화 테스트 실패] {item.name}"
+            description = (
+                f"자동화 테스트 실패\n\n"
+                f"[Test Case]\n{item.name}\n\n"
+                f"[Test File]\n{test_file}\n\n"
+                f"[Browser]\n{browser_name}\n\n"
+                f"[URL]\n{current_url}\n\n"
+                f"[Error]\n{error_message}"
+            )
+            new_key = create_jira_bug_ticket(summary=summary, description=description)
 
-                    [URL]
-                    {current_url}
+            if new_key and driver:
+                try:
+                    screenshot = driver.get_screenshot_as_png()
+                    attach_image_to_jira(new_key, screenshot)
+                except Exception as e:
+                    logger.warning(f"스크린샷 첨부 실패: {e}")
 
-                    [Error]
-                    {error_message}
-                    """
-
-        issue_key = create_jira_bug_ticket(summary=summary, description=description)
-
-        # ④ 스크린샷 첨부
-        if issue_key and driver:
-            try:
-                screenshot = driver.get_screenshot_as_png()
-                attach_image_to_jira(issue_key, screenshot)
-            except Exception as e:
-                print(f"스크린샷 첨부 실패: {e}")
+    elif report.passed and linked_issue_key:
+        # ── 연결된 이슈 통과 → Done 전이 + 코멘트 ──
+        comment_body = (
+            f"*[자동화 테스트 통과]* {item.name}\n\n"
+            f"브라우저: {browser_name} | URL: {current_url}"
+        )
+        add_comment_to_issue(linked_issue_key, comment_body)
+        transition_issue_to_done(linked_issue_key)
 
 
 # ── pytest 종료 시 Discord 결과 전송 ──────────────────────────────

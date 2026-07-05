@@ -12,6 +12,7 @@ pytestmark = [
     allure.epic("Tools"),
     allure.feature("퀴즈 생성"),
     allure.story("퀴즈 생성 해피패스"),
+    pytest.mark.jira("KAN-9"),
     pytest.mark.skip(reason="서비스 업데이트로 퀴즈 생성 기능 삭제됨"),
 ]
 
