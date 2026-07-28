@@ -39,6 +39,7 @@ def behavior(tools_driver_module):
 
 # ── 테스트 케이스 ──────────────────────────────────────────────────
 
+@pytest.mark.skip(reason="서비스 업데이트로 기능 종료")
 @allure.title("[FHC-037~044] 행동특성 및 종합의견 생성 해피 케이스")
 @allure.severity(allure.severity_level.NORMAL)
 def test_behavior_happy_case(behavior):
