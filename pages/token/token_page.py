@@ -42,6 +42,12 @@ class TokenPage(BasePage):
         "table.MuiTable-root",
     )
 
+    # 토큰 이용 내역 테이블의 행 (증감 비교용)
+    TOKEN_TABLE_ROWS = (
+        By.CSS_SELECTOR,
+        "table.MuiTable-root tr.MuiTableRow-root",
+    )
+
     # '전체 이용 내역' 버튼 (텍스트 기반 — href 기반은 개별 채팅 링크와 혼동될 수 있음)
     ALL_HISTORY_BUTTON = (
         By.XPATH,
@@ -171,6 +177,15 @@ class TokenPage(BasePage):
             return True
         except Exception:
             return False
+
+    def wait_for_token_table(self, timeout: int = None):
+        """토큰 사용량 테이블이 DOM에 나타날 때까지 대기"""
+        wait = WebDriverWait(self.driver, timeout) if timeout else self.wait
+        wait.until(EC.presence_of_element_located(self.TOKEN_TABLE))
+
+    def count_token_history_rows(self) -> int:
+        """토큰 이용 내역 테이블의 행 수 반환 (대기 없이 현재 DOM 기준)"""
+        return len(self.driver.find_elements(*self.TOKEN_TABLE_ROWS))
 
     # ========== 전체 이용 내역 ==========
 

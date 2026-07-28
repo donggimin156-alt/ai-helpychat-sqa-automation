@@ -18,3 +18,7 @@ class SettingsPage:
         self.wait.until(EC.element_to_be_clickable(self._SETTINGS_MENU_ITEM)).click()
         self.wait.until(EC.url_contains(self._ADMIN_URL))
         close_token_banner(self.driver, self.wait)
+
+    def count_gear_buttons(self) -> int:
+        """상단 톱니바퀴(설정 진입) 버튼 개수 반환 — 권한 없는 계정은 0"""
+        return len(self.driver.find_elements(*self._GEAR_BTN))

@@ -6,8 +6,6 @@ import time
 import pytest
 import allure
 
-from config.selenium_imports import By, EC, WebDriverWait
-
 from pages.token.token_page import TokenPage
 from pages.tools.base_tool_page import BaseToolPage
 
@@ -72,10 +70,8 @@ def test_token_increases_after_chat(token):
     token.driver.get(token.ADMIN_URL)
     time.sleep(1)
     token.click_all_history_button()
-    token.wait.until(
-        EC.presence_of_element_located(token.TOKEN_TABLE)
-    )
-    before_rows = len(token.driver.find_elements(By.CSS_SELECTOR, "table.MuiTable-root tr.MuiTableRow-root"))
+    token.wait_for_token_table()
+    before_rows = token.count_token_history_rows()
     before_text = token.get_lnb_token_text()
 
     token.send_chat_message(TEST_MESSAGE)
@@ -84,11 +80,9 @@ def test_token_increases_after_chat(token):
     token.driver.get(token.ADMIN_URL)
     time.sleep(1)
     token.click_all_history_button()
-    WebDriverWait(token.driver, 15).until(
-        EC.presence_of_element_located((By.CSS_SELECTOR, "table.MuiTable-root"))
-    )
+    token.wait_for_token_table(timeout=15)
     time.sleep(2)
-    after_rows = len(token.driver.find_elements(By.CSS_SELECTOR, "table.MuiTable-root tr.MuiTableRow-root"))
+    after_rows = token.count_token_history_rows()
     after_text = token.get_lnb_token_text()
 
     assert after_rows > before_rows, \

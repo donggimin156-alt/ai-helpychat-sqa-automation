@@ -4,12 +4,12 @@
 import pytest
 import logging
 import allure
-from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 
 from config.settings import DEFAULT_WAIT
 from config.browser_factory import make_simple_firefox_driver
 from config.login_helpers import do_login, close_token_banner
+from pages.settings.settings_general_page import SettingsPage
 
 logger = logging.getLogger(__name__)
 
@@ -63,6 +63,6 @@ def test_FHC_075_non_admin_cannot_access_settings(non_admin_login):
     """
     driver, wait = non_admin_login
     logger.info("[FHC-075] 비관리자 계정 설정 접근 불가 확인 시작")
-    gear_buttons = driver.find_elements(By.CSS_SELECTOR, 'button:has(svg[data-testid="gearIcon"])')
-    assert len(gear_buttons) == 0, "비관리자 계정에서 톱니바퀴 버튼이 표시됨"
+    gear_count = SettingsPage(driver, wait).count_gear_buttons()
+    assert gear_count == 0, f"비관리자 계정에서 톱니바퀴 버튼이 {gear_count}개 표시됨"
     logger.info("[FHC-075] 비관리자 계정 설정 접근 불가 확인 완료")
