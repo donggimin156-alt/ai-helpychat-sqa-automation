@@ -10,7 +10,7 @@
 
 브랜치 구성
 
-selenium — Python + Selenium + Pytest 기반 팀 프로젝트
+selenium  Python + Selenium + Pytest 기반 팀 프로젝트
 
 * * *
 
